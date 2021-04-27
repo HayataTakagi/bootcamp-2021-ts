@@ -5,10 +5,17 @@ type TextType = {
     label: string;
     placeholder: string;
 };
-type CheckAndRadioType = {
+type RadioType = {
     name: string;
     tagName: "input";
-    type: "radio" | "checkbox";
+    type: "radio";
+    label: string;
+    values: { label: string; value: number }[];
+};
+type CheckboxType = {
+    name: string;
+    tagName: "input";
+    type: "checkbox";
     label: string;
     values: { label: string; value: number }[];
 };
@@ -28,8 +35,20 @@ type TextAreaType = {
 const isText = (item: Item): item is TextType => {
     return item.tagName == "input" && (item.type === "text" || item.type === "tel" || item.type === "email");
 }
+const isRadio = (item: Item): item is RadioType => {
+    return item.tagName == "input" && item.type === "radio";
+}
+const isCheckbox = (item: Item): item is CheckboxType => {
+    return item.tagName == "input" && item.type === "checkbox";
+}
+const isSelect = (item: Item): item is SelectType => {
+    return item.tagName == "select";
+}
+const isTextarea = (item: Item): item is TextAreaType => {
+    return item.tagName == "textarea";
+}
 
-type Item = TextType | CheckAndRadioType | SelectType | TextAreaType;
+type Item = TextType | RadioType | CheckboxType | SelectType | TextAreaType;
 
 const items: Item[] = [
     {
@@ -115,11 +134,28 @@ function createInputRow(item: TextType) {
   `;
 }
 
-function createRadioRow(item: CheckAndRadioType) {
+function createRadioRow(item: RadioType) {
     if (item.values == null) return
     const options = item.values?.map(v => {
         return `
-<input type="${item.type}" id="${item.name}-${v.value}" name="${item.name}" value="${v.value}">
+<input type="radio" id="${item.name}-${v.value}" name="${item.name}" value="${v.value}">
+<label for="${item.name}-${v.value}">${v.label}</label>`;
+    })
+    return `
+    <tr>
+      <th>${item.label}</th>
+      <td>
+      ${options.join("")}
+      </td>
+    </tr>
+  `;
+}
+
+function createCheckboxRow(item: CheckboxType) {
+    if (item.values == null) return
+    const options = item.values?.map(v => {
+        return `
+<input type="checkbox" id="${item.name}-${v.value}" name="${item.name}" value="${v.value}">
 <label for="${item.name}-${v.value}">${v.label}</label>`;
     })
     return `
@@ -168,15 +204,14 @@ function createTable() {
         .map((item) => {
             if (isText(item)) {
                 return createInputRow(item);
-            }
-            switch (item.tagName) {
-                case "input":
-                    if (item.type === "radio" || item.type === "checkbox") return createRadioRow(item);
-                    else return
-                case "select":
-                    return createSelectRow(item);
-                case "textarea":
-                    return createTextAreaRow(item);
+            } else if (isRadio(item)) {
+                return createRadioRow(item);
+            } else if (isCheckbox(item)) {
+                return createCheckboxRow(item);
+            } else if (isSelect(item)) {
+                return createSelectRow(item);
+            } else if (isTextarea(item)) {
+                return createTextAreaRow(item);
             }
         })
         .join("");
