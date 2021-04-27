@@ -25,6 +25,10 @@ type TextAreaType = {
     placeholder: string;
 };
 
+const isText = (item: Item): item is TextType => {
+    return item.tagName == "input" && (item.type === "text" || item.type === "tel" || item.type === "email");
+}
+
 type Item = TextType | CheckAndRadioType | SelectType | TextAreaType;
 
 const items: Item[] = [
@@ -162,10 +166,12 @@ function createTextAreaRow(item: TextAreaType) {
 function createTable() {
     const list = items
         .map((item) => {
+            if (isText(item)) {
+                return createInputRow(item);
+            }
             switch (item.tagName) {
                 case "input":
-                    if (item.type === "text" || item.type === "tel" || item.type === "email") return createInputRow(item);
-                    else if (item.type === "radio" || item.type === "checkbox") return createRadioRow(item);
+                    if (item.type === "radio" || item.type === "checkbox") return createRadioRow(item);
                     else return
                 case "select":
                     return createSelectRow(item);
